@@ -1,4 +1,3 @@
-
 # Raqamli masalalar
 
 num = float(input("Son kiriting: "))
