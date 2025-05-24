@@ -1,0 +1,8 @@
+Word Count Report
+Total Words: 58
+Top 5 Words:
+the - 6
+in - 4
+os - 3
+python - 2
+is - 2
