@@ -1,13 +1,41 @@
 import json
 import csv
 import os
+from datetime import datetime
 
 class Tasks:
+    """Класс для представления задачи."""
+    
+    VALID_STATUSES = ["В ожидании", "В процессе", "Завершено"]
+    
     def __init__(self, task_id, task_name, task_description, date_line, status):
+        """
+        Инициализация новой задачи.
+        
+        Args:
+            task_id: Уникальный идентификатор задачи
+            task_name: Название задачи
+            task_description: Описание задачи
+            date_line: Срок выполнения (в формате ГГГГ-ММ-ДД)
+            status: Статус задачи
+        """
         self.task_id = task_id
         self.task_name = task_name
         self.task_description = task_description
-        self.date_line = date_line
+        
+        # Проверка и форматирование даты
+        if date_line:
+            try:
+                datetime.strptime(date_line, "%Y-%m-%d")
+                self.date_line = date_line
+            except ValueError:
+                raise ValueError("Дата должна быть в формате ГГГГ-ММ-ДД")
+        else:
+            self.date_line = ""
+        
+        # Проверка статуса
+        if status not in self.VALID_STATUSES:
+            raise ValueError(f"Недопустимый статус. Допустимые статусы: {', '.join(self.VALID_STATUSES)}")
         self.status = status
     
     def __str__(self):
@@ -27,9 +55,14 @@ class Tasks:
 
     @staticmethod
     def from_line(line):
-        parts = line.strip().split(",")
-        return Tasks(parts[0], parts[1], parts[2], parts[3], parts[4])
-    
+        try:
+            parts = line.strip().split(",")
+            if len(parts) != 5:
+                raise ValueError("Некорректный формат записи")
+            return Tasks(parts[0], parts[1], parts[2], parts[3], parts[4])
+        except Exception as e:
+            raise ValueError(f"Ошибка при чтении записи: {str(e)}")
+
 class StorageManage:
     def __init__(self, filename):
         self.filename = filename
@@ -84,17 +117,17 @@ class TaskManage:
 
     def add_task(self, task):
         if any(t.task_id == task.task_id for t in self.tasks):
-            print("❌ Task ID already exists.")
+            print("❌ Задача с таким ID уже существует.")
             return
         self.tasks.append(task)
         self.storage.save_tasks(self.tasks)
-        print("✅ Task added successfully!")
+        print("✅ Задача успешно добавлена!")
     
     def view_all_tasks(self):
         if not self.tasks:
-            print("⚠️ No tasks records found.")
+            print("⚠️ Задачи не найдены.")
         else:
-            print("📋 Tasks Records:")
+            print("📋 Список задач:")
             for task in self.tasks:
                 print(task)
     
@@ -102,25 +135,31 @@ class TaskManage:
         for task in self.tasks:
             if task.task_id == task_id:
                 return task
-        print("⚠️ Task not found.")
+        print("⚠️ Задача не найдена.")
         return None
     
     def update_task(self, task_id, task_name=None, task_description=None, 
                    date_line=None, status=None):
         task = self.search_task(task_id)
         if task:
-            if task_name:
-                task.task_name = task_name
-            if task_description:
-                task.task_description = task_description
-            if date_line:
-                task.date_line = date_line
-            if status:
-                task.status = status
-            self.storage.save_tasks(self.tasks)
-            print("✅ Task updated.")
+            try:
+                if task_name:
+                    task.task_name = task_name
+                if task_description:
+                    task.task_description = task_description
+                if date_line:
+                    datetime.strptime(date_line, "%Y-%m-%d")
+                    task.date_line = date_line
+                if status:
+                    if status not in Tasks.VALID_STATUSES:
+                        raise ValueError(f"Недопустимый статус. Допустимые статусы: {', '.join(Tasks.VALID_STATUSES)}")
+                    task.status = status
+                self.storage.save_tasks(self.tasks)
+                print("✅ Задача обновлена.")
+            except ValueError as e:
+                print(f"❌ Ошибка: {str(e)}")
         else:
-            print("❌ Task not found.")
+            print("❌ Задача не найдена.")
     
     def delete_task(self, task_id):
         initial_length = len(self.tasks)
@@ -128,70 +167,97 @@ class TaskManage:
         
         if len(self.tasks) < initial_length:
             self.storage.save_tasks(self.tasks)
-            print("✅ Task deleted.")
+            print("✅ Задача удалена.")
         else:
-            print("❌ Task not found.")
+            print("❌ Задача не найдена.")
 
     def filter_by_status(self, status):
-        filtered_tasks = [task for task in self.tasks if task.status.lower() == status.lower()]
+        if status not in Tasks.VALID_STATUSES:
+            print(f"❌ Недопустимый статус. Допустимые статусы: {', '.join(Tasks.VALID_STATUSES)}")
+            return []
+            
+        filtered_tasks = [task for task in self.tasks if task.status == status]
         if not filtered_tasks:
-            print(f"⚠️ No tasks found with status: {status}")
+            print(f"⚠️ Задачи со статусом '{status}' не найдены")
         else:
-            print(f"📋 Tasks with status '{status}':")
+            print(f"📋 Задачи со статусом '{status}':")
             for task in filtered_tasks:
                 print(task)
         return filtered_tasks
     
     def main(self):
         while True:
-            print("\nWelcome to the To-Do Application!")
-            print("1. Add a new task")
-            print("2. View all tasks")
-            print("3. Update a task")
-            print("4. Delete a task")
-            print("5. Filter tasks by status")
-            print("6. Save tasks")
-            print("7. Load tasks")
-            print("8. Exit")
-            choice = input("Enter your choice: ")
+            print("\nДобро пожаловать в приложение «Дела»!")
+            print("1. Добавить новую задачу")
+            print("2. Просмотреть все задачи")
+            print("3. Обновить задачу")
+            print("4. Удалить задачу")
+            print("5. Фильтрация задач по статусу")
+            print("6. Сохранить задачи")
+            print("7. Загрузить задачи")
+            print("8. Выйти")
+            choice = input("Введите свой выбор: ")
 
             if choice == "1":
-                task_id = input("Enter task ID: ")
-                task_name = input("Enter task name: ")
-                task_description = input("Enter task description: ")
-                date_line = input("Enter deadline: ")
-                status = input("Enter status: ")
-                new_task = Tasks(task_id, task_name, task_description, date_line, status)
-                self.add_task(new_task)
+                try:
+                    task_id = input("Введите ID задачи: ")
+                    task_name = input("Введите название: ")
+                    task_description = input("Введите описание: ")
+                    date_line = input("Введите срок выполнения (ГГГГ-ММ-ДД): ")
+                    print(f"Допустимые статусы: {', '.join(Tasks.VALID_STATUSES)}")
+                    status = input("Введите статус: ")
+                    new_task = Tasks(task_id, task_name, task_description, date_line, status)
+                    self.add_task(new_task)
+                except ValueError as e:
+                    print(f"❌ Ошибка: {str(e)}")
             elif choice == "2":
                 self.view_all_tasks()
             elif choice == "3":
-                task_id = input("Enter task ID to update: ")
-                task_name = input("Enter new task name (or press Enter to skip): ")
-                task_description = input("Enter new task description (or press Enter to skip): ")
-                date_line = input("Enter new deadline (or press Enter to skip): ")
-                status = input("Enter new status (or press Enter to skip): ")
+                task_id = input("Введите ID задачи для обновления: ")
+                task_name = input("Введите новое название (или нажмите Enter для пропуска): ")
+                task_description = input("Введите новое описание (или нажмите Enter для пропуска): ")
+                date_line = input("Введите новый срок (ГГГГ-ММ-ДД) (или нажмите Enter для пропуска): ")
+                print(f"Допустимые статусы: {', '.join(Tasks.VALID_STATUSES)}")
+                status = input("Введите новый статус (или нажмите Enter для пропуска): ")
                 self.update_task(task_id, task_name or None, task_description or None,
                                date_line or None, status or None)
             elif choice == "4":
-                task_id = input("Enter task ID to delete: ")
+                task_id = input("Введите ID задачи для удаления: ")
                 self.delete_task(task_id)
             elif choice == "5":
-                status = input("Enter status to filter by: ")
+                print(f"Допустимые статусы: {', '.join(Tasks.VALID_STATUSES)}")
+                status = input("Введите статус для фильтрации: ")
                 self.filter_by_status(status)
             elif choice == "6":
                 self.storage.save_tasks(self.tasks)
-                print("✅ Tasks saved successfully!")
+                print("✅ Задачи успешно сохранены!")
             elif choice == "7":
                 self.tasks = self.storage.load_tasks()
-                print("✅ Tasks loaded successfully!")
+                print("✅ Задачи успешно загружены!")
             elif choice == "8":
-                print("Goodbye!")
+                print("👋 До свидания!")
                 break
             else:
-                print("Invalid choice. Please try again.")
+                print("❌ Неверный выбор. Пожалуйста, попробуйте снова.")
 
 if __name__ == "__main__":
-    storage = StorageManage("tasks.json")
-    task_manager = TaskManage(storage)
-    task_manager.main()
+    print("Выберите формат хранения задач:")
+    print("1. JSON (.json)")
+    print("2. CSV (.csv)")
+    print("3. Текстовый файл (.txt)")
+    
+    format_choice = input("Введите номер формата (1-3): ")
+    
+    if format_choice == "1":
+        filename = "tasks.json"
+    elif format_choice == "2":
+        filename = "tasks.csv"
+    elif format_choice == "3":
+        filename = "tasks.txt"
+    else:
+        print("❌ Неверный выбор. Будет использован формат JSON.")
+        filename = "tasks.json"
+    
+    storage = StorageManage(filename)
+    manager = TaskManage(storage)
+    manager.main()
