@@ -4,26 +4,14 @@ import os
 from datetime import datetime
 
 class Tasks:
-    """Класс для представления задачи."""
-    
     VALID_STATUSES = ["В ожидании", "В процессе", "Завершено"]
     
     def __init__(self, task_id, task_name, task_description, date_line, status):
-        """
-        Инициализация новой задачи.
-        
-        Args:
-            task_id: Уникальный идентификатор задачи
-            task_name: Название задачи
-            task_description: Описание задачи
-            date_line: Срок выполнения (в формате ГГГГ-ММ-ДД)
-            status: Статус задачи
-        """
+
         self.task_id = task_id
         self.task_name = task_name
         self.task_description = task_description
         
-        # Проверка и форматирование даты
         if date_line:
             try:
                 datetime.strptime(date_line, "%Y-%m-%d")
@@ -33,7 +21,6 @@ class Tasks:
         else:
             self.date_line = ""
         
-        # Проверка статуса
         if status not in self.VALID_STATUSES:
             raise ValueError(f"Недопустимый статус. Допустимые статусы: {', '.join(self.VALID_STATUSES)}")
         self.status = status

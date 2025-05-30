@@ -1,16 +1,5 @@
 class Employee:
-    """Класс для представления сотрудника с основными атрибутами и методами."""
-    
     def __init__(self, employee_id, name, position, salary):
-        """
-        Инициализация нового сотрудника.
-        
-        Args:
-            employee_id: Уникальный идентификатор сотрудника
-            name: Имя сотрудника
-            position: Должность сотрудника
-            salary: Зарплата сотрудника
-        """
         self.employee_id = employee_id
         self.name = name
         self.position = position
@@ -27,7 +16,6 @@ class Employee:
 
     @staticmethod
     def from_line(line):
-        """Создает объект Employee из строки файла."""
         try:
             parts = line.strip().split(",")
             if len(parts) != 4:
@@ -37,13 +25,11 @@ class Employee:
             raise ValueError(f"Ошибка при чтении записи: {str(e)}")
     
 class EmployeeManager:
-    """Класс для управления записями сотрудников."""
 
     def __init__(self, filename="employees.txt"):
         self.filename = filename
     
     def validate_employee_id(self, employee_id):
-        """Проверяет корректность ID сотрудника."""
         if not employee_id.strip():
             raise ValueError("ID сотрудника не может быть пустым")
         if not employee_id.isalnum():
@@ -51,7 +37,6 @@ class EmployeeManager:
         return True
 
     def add_employee(self, employee):
-        """Добавляет нового сотрудника в файл."""
         try:
             self.validate_employee_id(employee.employee_id)
             if self.search_employee(employee.employee_id):
@@ -66,12 +51,6 @@ class EmployeeManager:
             return False
 
     def view_all_employees(self, sort_by=None):
-        """
-        Просмотр всех сотрудников с опциональной сортировкой.
-        
-        Args:
-            sort_by: Поле для сортировки ('name', 'salary', 'position')
-        """
         try:
             employees = []
             with open(self.filename, "r") as file:
@@ -103,7 +82,6 @@ class EmployeeManager:
             print(f"❌ Ошибка при чтении файла: {str(e)}")
 
     def search_employee(self, employee_id):
-        """Поиск сотрудника по ID."""
         try:
             with open(self.filename, "r") as file:
                 for line in file:
@@ -118,7 +96,6 @@ class EmployeeManager:
         return None
 
     def update_employee(self, employee_id, name=None, position=None, salary=None):
-        """Обновление информации о сотруднике."""
         updated = False
         employees = []
 
@@ -153,7 +130,6 @@ class EmployeeManager:
             print(f"❌ Ошибка при обновлении: {str(e)}")
 
     def delete_employee(self, employee_id):
-        """Удаление записи о сотруднике."""
         deleted = False
         employees = []
 
