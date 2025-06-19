@@ -1,13 +1,13 @@
 #python homework
 #1-problem
-list1 = [1, 1, 2]
-list2 = [2, 3, 4]
-list10=[]
+list1 = set(1,1,2)
+list2 = set(2, 3, 4)
+list10=set()
 for i,j in zip(list1,list2):
     if i not in list2:
-        list10.append(i)
+        list10.add(i)
     if j not in list1:
-        list10.append(j)
+        list10.add(j)
 print(list10)
 #2-problem
 n=int(input("enter number: "))
