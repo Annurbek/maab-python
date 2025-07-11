@@ -1,0 +1,5 @@
+[
+    {"id": 1, "vazifa": "Kir yuvish", "tugallangan": false, "prioritet": 3},
+    {"id": 2, "vazifa": "Oziq-ovqat sotib olish", "tugallangan": true, "prioritet": 2},
+    {"id": 3, "vazifa": "Uy vazifasini tugatish", "tugallangan": false, "prioritet": 1}
+]
